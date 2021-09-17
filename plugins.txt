@@ -1,0 +1,4 @@
+blueocean:1.25.0
+durable-task:1.39
+docker-workflow:1.26
+docker-plugin:1.2.3

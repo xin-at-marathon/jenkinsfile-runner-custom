@@ -1,0 +1,30 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Build') {
+            agent {
+                docker { 
+                    image 'node:14-alpine' 
+                    args '--user=root --privileged'
+                }
+            }
+            steps {
+                echo 'Building...'
+                sh 'node --version'
+            }
+        }
+        stage('Test') {
+            agent any
+            steps {
+                echo 'Testing..'
+            }
+        }
+        stage('Deploy') {
+            agent any
+            steps {
+                echo 'Deploying....'
+            }
+        }
+    }
+}
