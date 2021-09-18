@@ -1,6 +1,6 @@
 IMAGE_TAG=jcr.ztecloud.com:8081/devops/jenkinsfile-runner-custom
 
-.PHONY: get-plugins network dind test
+.PHONY: get-plugins network dind test-ssl test
 
 tmp/jenkins-plugin-manager.jar: tmp
 	test -f $@ || curl -o $@ https://github.com/jenkinsci/plugin-installation-manager-tool/releases/download/2.11.0/jenkins-plugin-manager-2.11.0.jar
@@ -36,9 +36,11 @@ dind:
         --volume jenkins-docker-certs:/certs/client \
         --volume jenkins-data:/build@tmp:rw \
         --volume $(HOME)/artifact/docker:/docker-image \
-        --publish 2376:2376 docker:dind --storage-driver overlay2
+        --publish 2376:2376 docker:dind \
+        --storage-driver overlay2 \
+        --insecure-registry 172.17.0.1:8081
 
-test:
+test-ssl:
 	docker run --rm -it \
         --network jenkins \
         -v $(PWD)/test:/workspace \
@@ -49,14 +51,20 @@ test:
         -e DOCKER_TLS_VERIFY=1 \
         $(IMAGE_TAG)
 
+
+test:
+	docker run --rm -it \
+        -v $(PWD)/test:/workspace \
+        -v /build@tmp:/build@tmp:rw \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        $(IMAGE_TAG)
+
 bash:
 	docker run --rm -it \
-        --network jenkins \
+        --network host \
         -v $(PWD)/test:/workspace \
-        -v jenkins-docker-certs:/certs/client:ro \
-        -v jenkins-data:/var/jenkins_home \
-        -e DOCKER_HOST=tcp://docker:2376 \
-        -e DOCKER_CERT_PATH=/certs/client \
-        -e DOCKER_TLS_VERIFY=1 \
+        -v /build@tmp:/build@tmp:rw \
+        -v /var/run/docker.sock:/var/run/docker.sock \
         --entrypoint bash \
         $(IMAGE_TAG)
+
