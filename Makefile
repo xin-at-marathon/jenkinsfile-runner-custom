@@ -1,4 +1,4 @@
-IMAGE_TAG=jcr.ztecloud.com:8081/devops/jenkinsfile-runner-custom
+IMAGE_TAG=cdn-snapshot-docker.artnj.zte.com.cn/coral/devops/jenkinsfile-runner-custom
 
 .PHONY: get-plugins network dind test-ssl test
 
@@ -26,31 +26,8 @@ clean:
 build: tmp/docker-ce-cli.deb
 	docker build --no-cache -t $(IMAGE_TAG) .
 
-network:
-	docker network create jenkins
-
-dind:
-	docker run --name jenkins-docker --rm --detach \
-        --privileged --network jenkins --network-alias docker \
-        --env DOCKER_TLS_CERTDIR=/certs \
-        --volume jenkins-docker-certs:/certs/client \
-        --volume jenkins-data:/build@tmp:rw \
-        --volume $(HOME)/artifact/docker:/docker-image \
-        --publish 2376:2376 docker:dind \
-        --storage-driver overlay2 \
-        --insecure-registry 172.17.0.1:8081
-
-test-ssl:
-	docker run --rm -it \
-        --network jenkins \
-        -v $(PWD)/test:/workspace \
-        -v jenkins-docker-certs:/certs/client:ro \
-        -v jenkins-data:/build@tmp:rw \
-        -e DOCKER_HOST=tcp://docker:2376 \
-        -e DOCKER_CERT_PATH=/certs/client \
-        -e DOCKER_TLS_VERIFY=1 \
-        $(IMAGE_TAG)
-
+push:
+	docker push $(IMAGE_TAG)
 
 test:
 	docker run --rm -it \
